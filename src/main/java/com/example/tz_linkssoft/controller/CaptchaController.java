@@ -12,36 +12,36 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpSession;
 
 @RestController
-@RequestMapping
 public class CaptchaController {
 
-    @RequestMapping(value = "/captcha", method = RequestMethod.GET, produces = "image/png")
+    @RequestMapping(value = "/get-captcha", method = RequestMethod.GET, produces = "image/png")
     public ResponseEntity<byte[]> getImageAsResponseEntity(HttpSession session) {
 
         ShearCaptcha captcha = CaptchaUtil.createShearCaptcha(250, 100);
         byte[] media = captcha.getImageBytes();
-
         session.setAttribute("captcha_code", captcha.getCode());
-
         HttpHeaders headers = new HttpHeaders();
         headers.add("request_id", session.getId());
         headers.add("captcha_string", captcha.getCode());
         headers.setCacheControl(CacheControl.noCache().getHeaderValue());
-
         ResponseEntity<byte[]> responseEntity = new ResponseEntity<>(media, headers, HttpStatus.OK);
         return responseEntity;
     }
 
-    @PostMapping("/captcha")
+    @RequestMapping(value = "/post-captcha", method = RequestMethod.POST)
     @ResponseBody
     public ResponseEntity createProduct(@RequestBody Captcha captcha, HttpSession session) {
 
         if (session.getId().equals(captcha.getRequest_id())
                 && session.getAttribute("captcha_code").equals(captcha.getCaptcha_string())
                 && System.currentTimeMillis() - session.getCreationTime() < 300000) {
+            session.invalidate();
             return ResponseEntity.status(HttpStatus.OK)
                     .body("success");
-        } else return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("error");
+        } else {
+            session.invalidate();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("error");
+        }
     }
 }

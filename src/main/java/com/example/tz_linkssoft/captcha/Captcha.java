@@ -8,6 +8,11 @@ public class Captcha {
     public Captcha() {
     }
 
+    public Captcha(String request_id, String captcha_string) {
+        this.request_id = request_id;
+        this.captcha_string = captcha_string;
+    }
+
     public String getRequest_id() {
         return request_id;
     }
